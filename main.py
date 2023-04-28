@@ -9,14 +9,14 @@ app = typer.Typer()
 
 @app.command()
 def scrape(channel_name: str):
-    url = f'https://www.youtube.com/@{channel_name}/videos'
+    URL = f'https://www.youtube.com/@{channel_name}/videos'
     driver = webdriver.Chrome()
     driver.maximize_window()
-    driver.get(url)
+    driver.get(URL)
 
     df = pd.DataFrame(columns=['title', 'views', 'when', 'link', 'created_at'])
     titles = []
-    reached_page_end = False
+    REACHED_PAGE_END = False
     SCROLL_PAUSE_TIME = 1
 
     while True:
@@ -55,19 +55,17 @@ def scrape(channel_name: str):
 
         # Check if we are end of the page
         if new_height == last_height:
-            reached_page_end = True
+            REACHED_PAGE_END = True
             print('reached to the end!')
         else:
             last_height = new_height
             print('keep going!')
 
         # Export current data frame to csv
-        if reached_page_end:
+        if REACHED_PAGE_END:
             df.to_csv(f'scraped_youtube_@{channel_name}.csv', index=False, encoding='utf-8')
             print('df exported to csv!')
             break
 
-scrape('synapse')
-
-if __name__ == '__youtube_scraper__':
+if __name__ == '__main__':
     app()
