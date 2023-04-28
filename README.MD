@@ -1,6 +1,6 @@
 # Youtube Scraper
 
-This tool allows you to scrape you preffered youtube channels videos
+This tool allows your to scrape you preffered youtube channels videos
 
 ## Usage
 
