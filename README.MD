@@ -4,11 +4,13 @@ This tool allows you to scrape you preffered youtube channels videos
 
 ## Usage
 
-To use, simply type the following command into your terminal:
+To use download this repository to your local, install the requirements
+
+`pip install -r requirements.txt`
+
+& simply type the following command into your terminal:
 
 `python youtube_scraper.py scrape <channel_name>`
-
-to the command line
 
 Here's an example command for scraping Joe Rogan's videos:
 
@@ -26,7 +28,15 @@ Currently, we support scraping the following attributes:
 
 ## Code
 
-```from selenium import webdriver
+The code for this tool uses the following libraries:
+
+- selenium
+- pandas
+- time
+- typer
+
+```python
+from selenium import webdriver
 from selenium.webdriver.common.by import By
 import pandas as pd
 import time
