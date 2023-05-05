@@ -1,6 +1,6 @@
 # Youtube Scraper
 
-This tool allows you to scrape your preffered youtube channels videos
+This tool allows you to scrape your preferred youtube videos & tweets
 
 ## Usage
 
@@ -10,21 +10,36 @@ To use download this repository to your local, create a venv, install the requir
 
 & simply type the following command into your terminal:
 
-`python main.py <channel_name>`
+Youtube: `python scrape_youtube.py <channel_name>`
+
+Twitter: `python scrape_twitter.py <twitter_handle>`
 
 Here's an example command for scraping Joe Rogan's videos:
 
-`python main.py joerogan`
+Youtube: `python scrape_youtube.py joerogan`
+
+Twitter: `python scrape_twitter.py joerogan`
 
 There is an example CSV file in the repository that you can preview to see which attributes we are scraping.
 
 Currently, we support scraping the following attributes:
+
+### Youtube
 
 - Video name
 - Video views
 - Video link
 - Video creation date
 - Video scraping date
+
+### Twitter
+
+- owner name
+- owner handle
+- tweet context
+- number of comments
+- number of likes
+- number of views (W.I.P.)
 
 ## Code
 
