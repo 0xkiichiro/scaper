@@ -59,69 +59,90 @@ from selenium.webdriver.common.by import By
 import pandas as pd
 import time
 import typer
+from selenium.webdriver.common.keys import Keys
+import csv
 
 app = typer.Typer()
 
 
 @app.command()
-def scrape(channel_name: str):
-    URL = f'https://www.youtube.com/@{channel_name}/videos'
+def scrape(twitter_handle: str):
+    SCROLL_PAUSE_TIME = 4
+    URL = f'https://twitter.com/{twitter_handle}'
     driver = webdriver.Chrome()
     driver.maximize_window()
     driver.get(URL)
-
-    df = pd.DataFrame(columns=['title', 'views', 'when', 'link', 'created_at'])
-    titles = []
+    print('waiting..')
+    time.sleep(SCROLL_PAUSE_TIME)
+    context_list = []
     REACHED_PAGE_END = False
-    SCROLL_PAUSE_TIME = 1
 
     while True:
-        videos = driver.find_elements(By.CLASS_NAME, 'style-scope ytd-rich-grid-media')
-        last_height = driver.execute_script("return document.documentElement.scrollHeight")
-        print('old: ', last_height)
+        try:
+            # if notifications modal open, close it
+            notifications_modal = driver.find_element(By.CSS_SELECTOR, '[data-testid="sheetDialog"]')
+            clickable = notifications_modal.find_element(By.CSS_SELECTOR, '[role="button"]')
+            clickable.click()
+        except:
+            pass
+        
+        with open(f'scraped_twitter_@{twitter_handle}.csv', 'w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            # Write the header first
+            writer.writerow(['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at'])
 
-        for video in videos:
-            title = video.find_element(By.ID, 'video-title').text
-            metadata = video.find_elements(By.CLASS_NAME, 'inline-metadata-item')
-            link = video.find_element(By.ID, 'thumbnail').get_attribute('href')
+            owner_name = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[1]/div/div/span/span[1]').text
+            owner_handle = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[2]/div/div/div/span').text
+            tweets = driver.find_elements(By.CSS_SELECTOR, f'[data-testid="tweet"]')
+            last_height = driver.execute_script("return document.documentElement.scrollHeight")
+            for tweet in tweets:
+                tweet_link = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
 
-            video_obj = {
-                'title':title,
-                'views': metadata[0].text,
-                'when': metadata[1].text,
-                'link': link,
-                'created_at': str(time.localtime()[0]) + '.' + str(time.localtime()[1]) + '.' + str(time.localtime()[2])
-            }
+                try:
+                    context = tweet.find_element(By.CSS_SELECTOR, 'div[data-testid="tweetText"]').text
+                    tweeted_at = tweet.find_element(By.TAG_NAME, 'time').text
+                    nu_of_comments = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="reply"]').text
+                    nu_of_likes = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="like"]').text
+                    nu_of_retweets = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="retweet"]').text
+                    # retweet = tweet.find_element(By.CSS_SELECTOR, 'div[data-testid="socialContext"]')
+                    # owner_name = retweet.find_element(By.XPATH, '//span').text
+                except:
+                    pass
+                try:
+                    tweet_impressions = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[4]/div/div[4]/a/div/div[2]/span/span/span').text
+                except:
+                    tweet_impressions = 0
+                ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at']
+                tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, str(time.localtime()[0]) + '.' + str(time.localtime()[1]) + '.' + str(time.localtime()[2])]
+                if context not in context_list:
+                    context_list.append(context)
+                    writer.writerow(tweet_obj)
+                    print(len(context_list))
 
-            if title not in titles:
-                titles.append(title)
-                df = df._append(video_obj, ignore_index=True)
-                print('total length:', len(df), df.tail(1))
+            # Scroll down to bottom
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
 
+            # Wait to load page
+            print('still waiting..')
+            time.sleep(SCROLL_PAUSE_TIME)
+            new_height = driver.execute_script("return document.documentElement.scrollHeight")
+            print('scroll down performed')
 
-        # Scroll down to bottom
-        driver.execute_script("document.body.scrollTop = document.body.scrollHeight;")
-        driver.execute_script("document.documentElement.scrollTop = document.documentElement.scrollHeight;")
+            # Check if we are end of the page
+            if new_height == last_height:
+                REACHED_PAGE_END = True
+                print('reached to the end!')
+            else:
+                last_height = new_height
+                print('keep going!')
 
-        # Wait to load page
-        time.sleep(SCROLL_PAUSE_TIME)
-        new_height = driver.execute_script("return document.documentElement.scrollHeight")
-        print('scroll down performed')
-        print('new: ', new_height)
-
-        # Check if we are end of the page
-        if new_height == last_height:
-            REACHED_PAGE_END = True
-            print('reached to the end!')
-        else:
-            last_height = new_height
-            print('keep going!')
-
-        # Export current data frame to csv
-        if REACHED_PAGE_END:
-            df.to_csv(f'scraped_youtube_@{channel_name}.csv', index=False, encoding='utf-8')
-            print('df exported to csv!')
-            break
+            # Export current data frame to csv
+            if REACHED_PAGE_END:
+                # df.to_csv(f'scraped_twitter_@{twitter_handle}.csv', index=False, encoding='utf-8')
+                print('df exported to csv!')
+                break
 
 if __name__ == '__main__':
     app()
