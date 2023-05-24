@@ -4,82 +4,89 @@ import pandas as pd
 import time
 import typer
 from selenium.webdriver.common.keys import Keys
+import csv
 
 app = typer.Typer()
 
 
 @app.command()
 def scrape(twitter_handle: str):
-    SCROLL_PAUSE_TIME = 2
+    SCROLL_PAUSE_TIME = 4
     URL = f'https://twitter.com/{twitter_handle}'
     driver = webdriver.Chrome()
     driver.maximize_window()
     driver.get(URL)
+    print('waiting..')
     time.sleep(SCROLL_PAUSE_TIME)
-    df = pd.DataFrame(columns=['context', 'nu_of_comments', 'nu_of_likes', 'views', 'owner_handle', 'owner_name', 'tweeted_at', 'created_at'])
     context_list = []
     REACHED_PAGE_END = False
 
     while True:
-        owner_name = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[1]/div/div/span/span[1]').text
-        owner_handle = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[2]/div/div/div/span').text
-        tweets = driver.find_elements(By.CSS_SELECTOR, f'[data-testid="tweet"]')
+        try:
+            # if notifications modal open, close it
+            notifications_modal = driver.find_element(By.CSS_SELECTOR, '[data-testid="sheetDialog"]')
+            clickable = notifications_modal.find_element(By.CSS_SELECTOR, '[role="button"]')
+            clickable.click()
+        except:
+            pass
+        
+        with open(f'scraped_twitter_@{twitter_handle}.csv', 'w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            # Write the header first
+            writer.writerow(['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at'])
 
-        last_height = driver.execute_script("return document.documentElement.scrollHeight")
-        for tweet in tweets:
-            action_group = driver.find_element(By.CSS_SELECTOR, '[role="group"]')
-            context = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[2]/div/span').text
-            tweeted_at = tweet.find_element(By.TAG_NAME, 'time').text
-            try:
-                nu_of_comments = action_group.find_element(By.CSS_SELECTOR, f'[data-testid="reply"]').text
-            except:
-                nu_of_comments = 0
-            try:
-                likes = action_group.find_element(By.CSS_SELECTOR, '[data-testid="like"]')
-                nu_of_likes = likes.find_element(By.XPATH, '//div/div[2]/span/span/span').text
-            except:
-                nu_of_likes = 0
+            owner_name = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[1]/div/div/span/span[1]').text
+            owner_handle = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[2]/div/div/div/span').text
+            tweets = driver.find_elements(By.CSS_SELECTOR, f'[data-testid="tweet"]')
+            last_height = driver.execute_script("return document.documentElement.scrollHeight")
+            for tweet in tweets:
+                tweet_link = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
 
-            tweet_obj = {
-                'owner_name': owner_name,
-                'owner_handle': owner_handle,
-                'context': context,
-                'nu_of_comments': nu_of_comments,
-                'nu_of_likes': nu_of_likes,
-                'tweeted_at': tweeted_at,
-                'created_at': str(time.localtime()[0]) + '.' + str(time.localtime()[1]) + '.' + str(time.localtime()[2])
-            }
-            if context not in context_list:
-                context_list.append(context)
-                df = df._append(tweet_obj, ignore_index=True)
-                print(tweet_obj)
-                print('total length:', len(df), df.tail(1))
+                try:
+                    context = tweet.find_element(By.CSS_SELECTOR, 'div[data-testid="tweetText"]').text
+                    tweeted_at = tweet.find_element(By.TAG_NAME, 'time').text
+                    nu_of_comments = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="reply"]').text
+                    nu_of_likes = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="like"]').text
+                    nu_of_retweets = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="retweet"]').text
+                    # retweet = tweet.find_element(By.CSS_SELECTOR, 'div[data-testid="socialContext"]')
+                    # owner_name = retweet.find_element(By.XPATH, '//span').text
+                except:
+                    pass
+                try:
+                    tweet_impressions = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[4]/div/div[4]/a/div/div[2]/span/span/span').text
+                except:
+                    tweet_impressions = 0
+                ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at']
+                tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, str(time.localtime()[0]) + '.' + str(time.localtime()[1]) + '.' + str(time.localtime()[2])]
+                if context not in context_list:
+                    context_list.append(context)
+                    writer.writerow(tweet_obj)
+                    print(len(context_list))
 
+            # Scroll down to bottom
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
 
-        # Scroll down to bottom
-        driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
-        driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
-        driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+            # Wait to load page
+            print('still waiting..')
+            time.sleep(SCROLL_PAUSE_TIME)
+            new_height = driver.execute_script("return document.documentElement.scrollHeight")
+            print('scroll down performed')
 
-        # Wait to load page
-        time.sleep(SCROLL_PAUSE_TIME)
-        new_height = driver.execute_script("return document.documentElement.scrollHeight")
-        print('scroll down performed')
-        print('new: ', new_height)
+            # Check if we are end of the page
+            if new_height == last_height:
+                REACHED_PAGE_END = True
+                print('reached to the end!')
+            else:
+                last_height = new_height
+                print('keep going!')
 
-        # Check if we are end of the page
-        if new_height == last_height:
-            REACHED_PAGE_END = True
-            print('reached to the end!')
-        else:
-            last_height = new_height
-            print('keep going!')
-
-        # Export current data frame to csv
-        if REACHED_PAGE_END:
-            df.to_csv(f'scraped_twitter_@{twitter_handle}.csv', index=False, encoding='utf-8')
-            print('df exported to csv!')
-            break
+            # Export current data frame to csv
+            if REACHED_PAGE_END:
+                # df.to_csv(f'scraped_twitter_@{twitter_handle}.csv', index=False, encoding='utf-8')
+                print('df exported to csv!')
+                break
 
 if __name__ == '__main__':
     app()
