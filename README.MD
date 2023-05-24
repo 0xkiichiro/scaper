@@ -39,7 +39,10 @@ Currently, we support scraping the following attributes:
 - tweet context
 - number of comments
 - number of likes
-- number of views (W.I.P.)
+- number of rewtweets
+- number of impressions
+- tweet link
+- tweeted at
 
 ## Code
 
