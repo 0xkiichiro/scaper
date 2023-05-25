@@ -21,19 +21,19 @@ def scrape(twitter_handle: str):
     context_list = []
     REACHED_PAGE_END = False
 
-    while True:
-        try:
-            # if notifications modal open, close it
-            notifications_modal = driver.find_element(By.CSS_SELECTOR, '[data-testid="sheetDialog"]')
-            clickable = notifications_modal.find_element(By.CSS_SELECTOR, '[role="button"]')
-            clickable.click()
-        except:
-            pass
+    with open(f'scraped_twitter_@{twitter_handle}.csv', 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        # Write the header first
+        writer.writerow(['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at'])
         
-        with open(f'scraped_twitter_@{twitter_handle}.csv', 'w', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            # Write the header first
-            writer.writerow(['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at'])
+        while True:
+            try:
+                # if notifications modal open, close it
+                notifications_modal = driver.find_element(By.CSS_SELECTOR, '[data-testid="sheetDialog"]')
+                clickable = notifications_modal.find_element(By.CSS_SELECTOR, '[role="button"]')
+                clickable.click()
+            except:
+                pass
 
             owner_name = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[1]/div/div/span/span[1]').text
             owner_handle = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[2]/div/div/div/span').text
@@ -59,9 +59,9 @@ def scrape(twitter_handle: str):
                 ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at']
                 tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, str(time.localtime()[0]) + '.' + str(time.localtime()[1]) + '.' + str(time.localtime()[2])]
                 if context not in context_list:
-                    context_list.append(context)
                     writer.writerow(tweet_obj)
-                    print(len(context_list))
+                    context_list.append(context)
+                    print(len(context_list),'->' , tweet_obj)
 
             # Scroll down to bottom
             driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
