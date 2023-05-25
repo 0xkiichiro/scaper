@@ -34,6 +34,8 @@ def scrape(twitter_handle: str):
                 clickable.click()
             except:
                 pass
+            current_time = time.localtime()
+            formatted_time = f"{current_time.tm_year}.{current_time.tm_mon}.{current_time.tm_mday} {current_time.tm_hour}:{current_time.tm_min}"
 
             owner_name = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[1]/div/div/span/span[1]').text
             owner_handle = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[2]/div/div/div/span').text
@@ -57,11 +59,10 @@ def scrape(twitter_handle: str):
                 except:
                     tweet_impressions = 0
                 ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at']
-                tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, str(time.localtime()[0]) + '.' + str(time.localtime()[1]) + '.' + str(time.localtime()[2])]
+                tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, formatted_time]
                 if context not in context_list:
                     writer.writerow(tweet_obj)
                     context_list.append(context)
-                    print(len(context_list),'->' , tweet_obj)
 
             # Scroll down to bottom
             driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
@@ -84,8 +85,7 @@ def scrape(twitter_handle: str):
 
             # Export current data frame to csv
             if REACHED_PAGE_END:
-                # df.to_csv(f'scraped_twitter_@{twitter_handle}.csv', index=False, encoding='utf-8')
-                print('df exported to csv!')
+                print(f'scrape completed! {len(context_list)} tweets are scraped.')
                 break
 
 if __name__ == '__main__':
