@@ -1,6 +1,5 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-import pandas as pd
 import time
 import typer
 from selenium.webdriver.common.keys import Keys
@@ -24,7 +23,7 @@ def scrape(twitter_handle: str):
     with open(f'scraped_twitter_@{twitter_handle}.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         # Write the header first
-        writer.writerow(['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at'])
+        writer.writerow(['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at', 'is_retweet'])
         
         while True:
             try:
@@ -41,25 +40,28 @@ def scrape(twitter_handle: str):
             owner_handle = driver.find_element(By.XPATH, '//*[@id="react-root"]/div/div/div[2]/main/div/div/div/div/div/div/div/div/div/div/div[2]/div[1]/div/div[2]/div/div/div/span').text
             tweets = driver.find_elements(By.CSS_SELECTOR, f'[data-testid="tweet"]')
             last_height = driver.execute_script("return document.documentElement.scrollHeight")
+            pass_counter = 0
             for tweet in tweets:
                 tweet_link = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
-
+                try:
+                    is_retweet = bool(tweet.find_element(By.CSS_SELECTOR, 'div[data-testid="socialContext"]').text)
+                except:
+                    is_retweet = False
                 try:
                     context = tweet.find_element(By.CSS_SELECTOR, 'div[data-testid="tweetText"]').text
                     tweeted_at = tweet.find_element(By.TAG_NAME, 'time').text
                     nu_of_comments = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="reply"]').text
                     nu_of_likes = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="like"]').text
                     nu_of_retweets = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="retweet"]').text
-                    # retweet = tweet.find_element(By.CSS_SELECTOR, 'div[data-testid="socialContext"]')
-                    # owner_name = retweet.find_element(By.XPATH, '//span').text
                 except:
+                    pass_counter+=1
                     pass
                 try:
                     tweet_impressions = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[4]/div/div[4]/a/div/div[2]/span/span/span').text
                 except:
                     tweet_impressions = 0
-                ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at']
-                tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, formatted_time]
+                ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at', 'is_retweet']
+                tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, formatted_time, is_retweet]
                 if context not in context_list:
                     writer.writerow(tweet_obj)
                     context_list.append(context)
@@ -85,7 +87,7 @@ def scrape(twitter_handle: str):
 
             # Export current data frame to csv
             if REACHED_PAGE_END:
-                print(f'scrape completed! {len(context_list)} tweets are scraped.')
+                print(f'scrape completed! {len(context_list)} tweets are scraped, number of passed tweets are {pass_counter}.')
                 break
 
 if __name__ == '__main__':
