@@ -2,12 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import pandas as pd
 import time
-import typer
 
-app = typer.Typer()
-
-
-@app.command()
 def scrape(channel_name: str):
     URL = f'https://www.youtube.com/@{channel_name}/videos'
     driver = webdriver.Chrome()
@@ -66,6 +61,3 @@ def scrape(channel_name: str):
             df.to_csv(f'scraped_youtube_@{channel_name}.csv', index=False, encoding='utf-8')
             print('df exported to csv!')
             break
-
-if __name__ == '__main__':
-    app()

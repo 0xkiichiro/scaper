@@ -1,2 +1,3 @@
 # Ignore vitrual environment
 venv
+__pycache__
