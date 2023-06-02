@@ -4,9 +4,9 @@ import time
 import typer
 from selenium.webdriver.common.keys import Keys
 import csv
+import sqlite3
 
 app = typer.Typer()
-
 
 @app.command()
 def scrape(twitter_handle: str):
@@ -19,6 +19,8 @@ def scrape(twitter_handle: str):
     time.sleep(SCROLL_PAUSE_TIME)
     context_list = []
     REACHED_PAGE_END = False
+    conn = sqlite3.connect('tweets.sqlite')
+    cursor = conn.cursor()
 
     with open(f'scraped_twitter_@{twitter_handle}.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
@@ -42,6 +44,10 @@ def scrape(twitter_handle: str):
             last_height = driver.execute_script("return document.documentElement.scrollHeight")
             pass_counter = 0
             for tweet in tweets:
+                retweet_source_user = ''
+                retweet_content = ''
+                quote_source_key = ''
+                quote_content = ''
                 tweet_link = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
                 try:
                     is_retweet = bool(tweet.find_element(By.CSS_SELECTOR, 'div[data-testid="socialContext"]').text)
@@ -60,10 +66,13 @@ def scrape(twitter_handle: str):
                     tweet_impressions = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[4]/div/div[4]/a/div/div[2]/span/span/span').text
                 except:
                     tweet_impressions = 0
-                ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at', 'is_retweet']
-                tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, formatted_time, is_retweet]
+                columns = ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at', 'is_retweet', 'retweet_source_user', 'retweet_content','quote_source_key', 'quote_content']
+                tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, formatted_time, is_retweet, retweet_source_user, retweet_content, quote_source_key, quote_content]
                 if context not in context_list:
-                    writer.writerow(tweet_obj)
+                    print(tweet_obj)
+                    cursor.execute(f'''
+                        INSERT INTO scraped_tweets({', '.join(columns)}) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', tweet_obj)
                     context_list.append(context)
 
             # Scroll down to bottom
@@ -87,6 +96,8 @@ def scrape(twitter_handle: str):
 
             # Export current data frame to csv
             if REACHED_PAGE_END:
+                conn.commit()
+                conn.close()
                 print(f'scrape completed! {len(context_list)} tweets are scraped, number of passed tweets are {pass_counter}.')
                 break
 

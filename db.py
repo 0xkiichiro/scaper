@@ -1,8 +1,8 @@
 import sqlite3
 
 conn = sqlite3.connect('tweets.sqlite')
-
 cursor = conn.cursor()
+
 sql_query = '''CREATE TABLE scraped_tweets (
     id INTEGER PRIMARY KEY,
     context TEXT,
@@ -19,7 +19,10 @@ sql_query = '''CREATE TABLE scraped_tweets (
     retweet_content TEXT,
     quote_source_key TEXT,
     quote_content TEXT,
-    FOREIGN KEY (retweet_source_user) REFERENCES scraped_tweets(owner_handle)
+    owner_name TEXT
 )'''
 
 cursor.execute(sql_query)
+
+conn.commit()
+conn.close()

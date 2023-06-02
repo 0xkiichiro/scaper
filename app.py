@@ -1,10 +1,8 @@
 from scrape_twitter import scrape
 from flask import Flask, request, jsonify
-import pandas as pd
 import sqlite3
 
 app = Flask(__name__)
-obj = {'hello': 'world'}
 
 def db_connection():
     conn = None
@@ -18,14 +16,19 @@ def db_connection():
 def scrape_tweets(owner_handle):
     conn = db_connection()
     cursor = conn.cursor()
-    if request.method == 'POST':
-        response = jsonify(obj)
-        return response
-    
+
+    try:
+        if request.method == 'POST':
+            data = scrape(owner_handle)
+            response = jsonify(data)
+            return response
+    except request.ConnectionError as e:
+        return e
+
     if request.method == 'GET':
         cursor = conn.execute(f'''
             SELECT * FROM scraped_tweets
-            WHERE owner_handle == "{owner_handle}"
+            WHERE owner_handle == "@{owner_handle}"
         ''')
         
         tweets = [
@@ -44,7 +47,8 @@ def scrape_tweets(owner_handle):
             'retweet_source_user': row[11],
             'retweet_content': row[12],
             'quote_source_key': row[13],
-            'quote_content': row[14]
+            'quote_content': row[14],
+            'owner_name': row[15]
         }
         for row in cursor.fetchall()
     ]
