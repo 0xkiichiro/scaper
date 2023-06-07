@@ -40,15 +40,16 @@ def scrape(twitter_handle: str):
         pass_counter = 0
 
         for tweet in tweets:
-            retweet_source_user = ''
             retweet_content = ''
             quote_source_key = ''
             quote_content = ''
-            tweet_link = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
-
+            retweet_source_user = ''
+            tweet_link = tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
             try:
                 is_retweet = bool(tweet.find_element(By.CSS_SELECTOR, 'span[data-testid="socialContext"]').text)
-                print(is_retweet)
+                if is_retweet:
+                    retweet_source_user = tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[1]/a/div/span').text
+                    tweet_link = tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[1]/div[1]/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
             except:
                 is_retweet = False
             try:
@@ -61,7 +62,7 @@ def scrape(twitter_handle: str):
                 pass_counter+=1
                 pass
             try:
-                tweet_impressions = tweet.find_element(By.XPATH, '//div/div/div[2]/div[2]/div[4]/div/div[4]/a/div/div[2]/span/span/span').text
+                tweet_impressions = tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[4]/div/div[4]/a/div/div[2]/span/span/span').text
             except:
                 tweet_impressions = 0
 
@@ -70,7 +71,6 @@ def scrape(twitter_handle: str):
             tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, formatted_time, is_retweet, retweet_source_user, retweet_content, quote_source_key, quote_content]
 
             if context not in context_list:
-                print(tweet_obj)
                 cursor.execute(f'''
                     INSERT INTO scraped_tweets({', '.join(columns)}) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', tweet_obj)

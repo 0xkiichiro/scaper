@@ -1,6 +1,7 @@
 from scrape_twitter import scrape
 from flask import Flask, request, jsonify
 import sqlite3
+import requests
 
 app = Flask(__name__)
 
@@ -22,7 +23,7 @@ def scrape_tweets(owner_handle):
             data = scrape(owner_handle)
             response = jsonify(data)
             return response
-    except request.ConnectionError as e:
+    except requests.exceptions.RequestException as e:
         return e
 
     if request.method == 'GET':
