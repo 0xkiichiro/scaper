@@ -40,10 +40,29 @@ def scrape(twitter_handle: str):
         pass_counter = 0
 
         for tweet in tweets:
-            retweet_content = ''
-            quote_source_key = ''
+            try:
+                # check for video
+                video = str(tweet.find_elements(By.TAG_NAME, 'video'))
+                if video:
+                    has_media = True
+            except:
+                has_media = False
+                pass
+            try:
+                # check for image
+                image = tweet.find_element(By.XPATH, './/img[@alt="Image"]')
+                media_link = str(image.get_attribute('src'))
+                has_media = True
+            except:
+                image = ''
+                media_link = ''
+                has_media = False
+
+            is_quote = ''
+            quote_source_user = ''
             quote_content = ''
             retweet_source_user = ''
+            context = ''
             tweet_link = tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
             try:
                 is_retweet = bool(tweet.find_element(By.CSS_SELECTOR, 'span[data-testid="socialContext"]').text)
@@ -67,13 +86,14 @@ def scrape(twitter_handle: str):
                 tweet_impressions = 0
 
             # Create DB columns
-            columns = ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at', 'is_retweet', 'retweet_source_user', 'retweet_content','quote_source_key', 'quote_content']
-            tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, formatted_time, is_retweet, retweet_source_user, retweet_content, quote_source_key, quote_content]
+            columns = ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at', 'is_retweet', 'retweet_source_user', 'quote_source_user', 'quote_content', 'is_quote', 'has_media' ,'media_link']
+            tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, formatted_time, is_retweet, retweet_source_user, quote_source_user, quote_content, is_quote, has_media, media_link]
 
             if context not in context_list:
                 cursor.execute(f'''
-                    INSERT INTO scraped_tweets({', '.join(columns)}) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO scraped_tweets({', '.join(columns)}) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', tweet_obj)
+                conn.commit()
                 context_list.append(context)
 
         # Scroll down to bottom
@@ -97,7 +117,6 @@ def scrape(twitter_handle: str):
 
         # Write to DB
         if REACHED_PAGE_END:
-            conn.commit()
             conn.close()
             print(f'scrape completed! {len(context_list)} tweets are scraped, number of passed tweets are {pass_counter}.')
             break

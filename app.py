@@ -46,10 +46,12 @@ def scrape_tweets(owner_handle):
             'created_at': row[9],
             'is_retweet': bool(row[10]),
             'retweet_source_user': row[11],
-            'retweet_content': row[12],
-            'quote_source_key': row[13],
-            'quote_content': row[14],
-            'owner_name': row[15]
+            'quote_source_user': row[12],
+            'quote_content': row[13],
+            'owner_name': row[14],
+            'is_quote': row[15],
+            'has_media': row[16],
+            'media_link': row[17]
         }
         for row in cursor.fetchall()
     ]

@@ -16,10 +16,12 @@ sql_query = '''CREATE TABLE scraped_tweets (
     created_at TEXT NOT NULL,
     is_retweet INTEGER NOT NULL,
     retweet_source_user TEXT,
-    retweet_content TEXT,
-    quote_source_key TEXT,
+    quote_source_user TEXT,
     quote_content TEXT,
-    owner_name TEXT
+    owner_name TEXT,
+    is_quote INTEGER NOT NULL,
+    has_media INTEGER NOT NULL,
+    media_link TEXT
 )'''
 
 cursor.execute(sql_query)
