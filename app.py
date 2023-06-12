@@ -24,7 +24,7 @@ def scrape_tweets(owner_handle):
             response = jsonify(data)
             return response
         except requests.exceptions.RequestException as e:
-            return ex
+            return e
     if request.method == 'GET':
         cursor = conn.execute(f'''
             SELECT * FROM scraped_tweets
