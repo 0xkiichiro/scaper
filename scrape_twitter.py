@@ -4,6 +4,7 @@ import time
 import typer
 from selenium.webdriver.common.keys import Keys
 import sqlite3
+from parse import convert_k_m_to_numeric
 
 app = typer.Typer()
 
@@ -74,14 +75,14 @@ def scrape(twitter_handle: str):
             try:
                 context = tweet.find_element(By.CSS_SELECTOR, 'div[data-testid="tweetText"]').text
                 tweeted_at = tweet.find_element(By.TAG_NAME, 'time').text
-                nu_of_comments = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="reply"]').text
-                nu_of_likes = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="like"]').text
-                nu_of_retweets = tweet.find_element(By.CSS_SELECTOR,'div[data-testid="retweet"]').text
+                nu_of_comments = convert_k_m_to_numeric(tweet.find_element(By.CSS_SELECTOR,'div[data-testid="reply"]').text)
+                nu_of_likes = convert_k_m_to_numeric(tweet.find_element(By.CSS_SELECTOR,'div[data-testid="like"]').text)
+                nu_of_retweets = convert_k_m_to_numeric(tweet.find_element(By.CSS_SELECTOR,'div[data-testid="retweet"]').text)
             except:
                 pass_counter+=1
                 pass
             try:
-                tweet_impressions = tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[4]/div/div[4]/a/div/div[2]/span/span/span').text
+                tweet_impressions = convert_k_m_to_numeric(tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[4]/div/div[4]/a/div/div[2]/span/span/span').text)
             except:
                 tweet_impressions = 0
 
