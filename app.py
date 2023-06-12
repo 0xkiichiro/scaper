@@ -18,14 +18,13 @@ def scrape_tweets(owner_handle):
     conn = db_connection()
     cursor = conn.cursor()
 
-    try:
-        if request.method == 'POST':
+    if request.method == 'POST':
+        try:
             data = scrape(owner_handle)
             response = jsonify(data)
             return response
-    except requests.exceptions.RequestException as e:
-        return e
-
+        except requests.exceptions.RequestException as e:
+            return ex
     if request.method == 'GET':
         cursor = conn.execute(f'''
             SELECT * FROM scraped_tweets

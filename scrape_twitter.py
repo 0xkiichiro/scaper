@@ -101,6 +101,9 @@ def scrape(twitter_handle: str):
         driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
         driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
         driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+        driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+        driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
+        driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
 
         # Wait to load page
         print('still waiting..')
