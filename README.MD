@@ -20,8 +20,6 @@ Youtube: `python scrape_youtube.py joerogan`
 
 Twitter: `python scrape_twitter.py joerogan`
 
-There is an example CSV file in the repository that you can preview to see which attributes we are scraping.
-
 Currently, we support scraping the following attributes:
 
 ### Youtube
