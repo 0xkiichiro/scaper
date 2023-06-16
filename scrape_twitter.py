@@ -64,8 +64,14 @@ def scrape(twitter_handle: str):
             quote_content = ''
             retweet_source_user = ''
             context = ''
-            tweet_link = tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
+            # todo above
+            nu_of_comments = 0
+            nu_of_likes = 0
+            nu_of_retweets = 0
+            tweeted_at = ''
+            tweet_link = ''
             try:
+                tweet_link = tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[3]/a').get_attribute('href')
                 is_retweet = bool(tweet.find_element(By.CSS_SELECTOR, 'span[data-testid="socialContext"]').text)
                 if is_retweet:
                     retweet_source_user = tweet.find_element(By.XPATH, './/div/div/div[2]/div[2]/div[1]/div/div[1]/div/div/div[2]/div/div[1]/a/div/span').text
@@ -89,7 +95,7 @@ def scrape(twitter_handle: str):
             # Create DB columns
             columns = ['context', 'nu_of_comments', 'nu_of_likes', 'nu_of_retweets', 'tweet_impressions', 'owner_handle', 'owner_name', 'tweet_link', 'tweeted_at', 'created_at', 'is_retweet', 'retweet_source_user', 'quote_source_user', 'quote_content', 'is_quote', 'has_media' ,'media_link']
             tweet_obj = [context, nu_of_comments, nu_of_likes, nu_of_retweets, tweet_impressions, owner_handle, owner_name, tweet_link, tweeted_at, formatted_time, is_retweet, retweet_source_user, quote_source_user, quote_content, is_quote, has_media, media_link]
-
+            # todo: change this switch; when context is empty we dont scrape them which is wrong!
             if context not in context_list:
                 cursor.execute(f'''
                     INSERT INTO scraped_tweets({', '.join(columns)}) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -97,6 +103,7 @@ def scrape(twitter_handle: str):
                 conn.commit()
                 context_list.append(context)
 
+        print(tweet_obj)
         # Scroll down to bottom
         driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)
         driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.PAGE_DOWN)

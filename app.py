@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify
 import sqlite3
 import requests
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder = '.')
 
 def db_connection():
     conn = None
@@ -61,4 +61,4 @@ def scrape_tweets(owner_handle):
         return jsonify([])
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug = True, host = '0.0.0.0')
