@@ -1,4 +1,4 @@
-# Youtube Scraper
+# Twitter Scraper
 
 This tool allows you to scrape your preferred youtube videos & tweets
 
